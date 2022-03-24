@@ -1,0 +1,126 @@
+#!/usr/bin/bash
+
+tempargs=($1 $2 $3 $4)
+args=()
+
+# include only ones with value
+for i in ${tempargs[@]}; do
+	if [[ -n i ]]; then
+		args=(${args[@]} $i)
+	fi
+done
+
+dirt=""
+start=""
+for i in ${!args[@]}; do
+	case ${args[$i]} in
+		"-d" | "--directory")
+			# next cell
+			dirt=${args[$(($i + 1))]}
+			;;
+		"-o" | "--output")
+			start=${args[$(($i + 1))]}
+			;;
+	esac
+done
+
+
+# check dependencies
+if [[ -z $(which xdotool) ]]; then
+	echo "error: command 'xdotool' not installed"
+	exit 1
+fi
+
+
+# check options
+if [[ -z $dirt ]]; then
+	echo "warning: directory not specified (.tmp will be used)"
+    dirt="Pictures/wincmirror/.tmp"
+else
+	# if given directory dont exists
+	if [[ ! -d "$HOME/$dirt" ]]; then
+
+		echo "warning: '$HOME/$dirt' does not exists (.tmp will be used)"
+		dirt="Pictures/wincmirror/.tmp"
+	fi
+fi
+
+if [[ -z $start ]]; then
+	echo "warning: filename not specified (1 will be used)"
+	start=1
+fi
+
+cd "$HOME"
+
+# parents-exclude existing folder warning
+mkdir --parents $dirt
+
+cd "$dirt"
+
+list=$(ls)
+if [[ -n $list ]]; then
+	tot=0
+	for i in $list; do
+		let tot++
+	done
+	echo "warning: detected dir and files: $tot"
+fi
+
+echo
+
+
+
+function RunScreenshot
+{
+	terminalid=$(xdotool getactivewindow)
+	cur=$start
+	input="y"
+
+	read -p ">>> " input
+
+	# not nulll
+	while [[ -n $input ]]; do
+
+		case $input in
+			"c")
+				xdotool windowminimize $terminalid
+				scrot --select --overwrite "$HOME/$dirt/$cur.png"
+				xdotool windowraise $terminalid
+
+				# if selection was NOT interrupted or file exists
+				if [[ -e "$HOME/$dirt/$cur.png" ]]; then
+					echo "snapped"
+					let cur++
+				fi
+				;;
+			"q")
+				break
+				;;
+			"start")
+				read -p "    >>> " cur
+				;;
+			"prev")
+				let cur--
+				;;
+			"reset")
+				rm -f *.png
+				cur=1
+				;;
+			*)
+				echo "warning: invalid argument"
+				;;
+		esac
+
+	    read -p ">>> " input
+
+	done
+}
+
+function main
+{
+	echo "Screenshooter - continuous manual selection"
+	echo
+
+	RunScreenshot
+}
+main

@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+
+"""
+	pseudo-command using python serves to execute program files of any possible language (mainly for automating scripts)
+	without specifying its iterpreter or compiler and also its file format; treating the given argument as a command.
+"""
+
+
+import sys, os
+from pathlib import Path
+
+
+compilers = {'': 'cat',
+			 '.py': 'python3', 
+			 '.sh': 'bash',
+			 '.md': 'cat',
+			 '.markdown': 'cat',
+			 '.txt': 'cat',
+			 '.text': 'cat',
+			 '.cpp': 'cat',
+			 '.class': 'java'
+			}
+
+
+def Find_Run(source, comm):
+	os.chdir(source)
+	filedirs = os.listdir()
+
+	Execute = lambda path : os.system('%s %s/%s%s' % (compilers[path.suffix], source, comm, path.suffix))
+
+	for fd in filedirs: 
+
+		fullpath = f'{source}/{fd}'
+		path = Path(fullpath)
+
+		# check if source path has directory inside; if then, go back and iterate
+		if path.is_dir():
+			Find_Run(fullpath, comm)
+
+		elif path.is_file() and comm == path.stem:
+			print(f'auto: Found command, {comm}')
+			Execute(path)
+
+			return True
+	return False
+
+def main():
+	try:
+		# get the command
+		comm = sys.argv[1]
+
+		# ass and delete source paths directly using 'nano' coomand
+		if comm == '--config' or comm == '-c':
+			os.system('nano auto.config')
+
+		# read config file;  content's path should be absolute
+		sources = None
+		with open(os.path.realpath(__file__) + '.config', 'r') as file:
+			sources = file.readlines()
+
+		# find the command given in the source paths
+		for source in sources:
+			Find_Run(source, comm)
+
+
+	except IndexError:
+		print('auto: no command given')
+
+
+if __name__ == '__main__':
+	main()
+
+	

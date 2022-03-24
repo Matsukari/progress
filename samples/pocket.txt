@@ -1,0 +1,9 @@
+dollar = 18
+peso1 = 6
+peso5 = 14
+peso10 = 3
+peso20 = 14
+peso50 = 6
+peso100 = 9
+peso500 = 2
+peso100 = 15

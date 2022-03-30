@@ -2,6 +2,8 @@
 import random, time, copy
 
 # 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 - fiengine token
+# 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 - songs_token
+# apython-345600 - google console cloud id
 
 # cells contain row which then contain item. [row][x]
 # treat 0 index as main draw

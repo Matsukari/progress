@@ -3,58 +3,104 @@
 """
 	pseudo-command using python serves to execute program files of any possible language (mainly for automating scripts)
 	without specifying its iterpreter or compiler and also its file format; treating the given argument as a command.
+	the working directory will be the directory given argument was found.
 """
 
 
 import sys, os
 from pathlib import Path
+from importlib.machinery import SourceFileLoader
+
+std = SourceFileLoader("std", "/home/amon/programming/py/lib/std.py").load_module()
 
 
 compilers = {'': 'cat',
 			 '.py': 'python3', 
 			 '.sh': 'bash',
 			 '.md': 'cat',
+			 '.html': 'w3m -dump',
 			 '.markdown': 'cat',
 			 '.txt': 'cat',
 			 '.text': 'cat',
 			 '.cpp': 'cat',
 			 '.class': 'java'
 			}
+interpreters = {
+	
+}
+
+def Execute(path):
+	suffix = path.suffix
+
+	# if format is not specified; confirm if first line contains its compiler location
+	if suffix == '':
+		with open(path, 'r') as file: 
+			line = file.readline().strip()
+			if line.endswith('python3'): suffix = '.py'
+			elif line.endswith('bash'): suffix = '.sh'
+
+	if suffix in compilers:
+		os.chdir(path.parent)
+		os.system('%s %s %s' % (compilers[suffix], path.name, std.ArgToString(sys.argv[2:])))
+	elif suffix in interpreters:
+		pass
+	else:
+		print(f'auto: Unknown file format: {suffix}')
+		return False
+
+	return True
 
 
 def Find_Run(source, comm):
 	os.chdir(source)
 	filedirs = os.listdir()
 
-	Execute = lambda path : os.system('%s %s/%s%s' % (compilers[path.suffix], source, comm, path.suffix))
-
+	def Exec(path):
+		print(f'auto: Found command: {comm}{path.suffix} under {round(std.GetTicks(), 2)} ms')
+		# if fail, then search for another similar command
+		return Execute(path)
+	
 	for fd in filedirs: 
 
-		fullpath = f'{source}/{fd}'
-		path = Path(fullpath)
+		# string path for files
+		path = Path(f'{source}/{fd}')
 
 		# check if source path has directory inside; if then, go back and iterate
 		if path.is_dir():
-			Find_Run(fullpath, comm)
+			#if str(path).endswith('.git'):
+			#	continue
 
-		elif path.is_file() and comm == path.stem:
-			print(f'auto: Found command, {comm}')
-			Execute(path)
+			Find_Run(path, comm)
 
-			return True
+		elif path.is_file():
+
+			# prioritize if command has aa format(suffix)
+			if Path(comm).suffix and Path(comm).name == path.name:
+				Exec(path)
+
+			# ignored if above statement is executed
+			elif not Path(comm).suffix and comm.startswith(path.stem):
+				if Exec(path):
+					return True
+				else:
+					print()
+
 	return False
 
 def main():
 	try:
-		# get the command
+		#for arg in sys.argv[1:]:
+		#	if arg == '--compile' or arg == '--run':
+
 		comm = sys.argv[1]
 
 		# ass and delete source paths directly using 'nano' coomand
 		if comm == '--config' or comm == '-c':
 			os.system('nano auto.config')
 
-		# read config file;  content's path should be absolute
 		sources = None
+		# config filename and path should be relative to THIS FILE'S PATH
+		# read config file;  content's path should be absolute
 		with open(os.path.realpath(__file__) + '.config', 'r') as file:
 			sources = file.readlines()
 

@@ -1,5 +1,4 @@
 #!/usr/bin/bash
-
 echo "doc'ed"
 read -p "read: " inp
 echo $inp > ex.data

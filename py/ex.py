@@ -195,10 +195,18 @@ def main(*args, **kwds):
     curses.echo()
     curses.endwin()
 
+    
 
 
 if __name__ == '__main__':
     #curses.wrapper(main)
+    from lib import std
+    
+    s = '/home/amon/programming/x.txt'
+    print(std.RStringBetween(s, '/', '/', 1))
+
+    with open('items', 'r') as f:
+        print(f.read())
+
     import os
-    print(f"{os.path.basename(__file__)}")
-    print(__file__)
+    print(os.getcwd())
